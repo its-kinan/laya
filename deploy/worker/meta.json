@@ -8,7 +8,7 @@
     {
       "type": "plain_text",
       "name": "ALIASES",
-      "text": "laya-orig,laya-finetuned"
+      "text": "kaggle-laya-cpu"
     },
     {
       "type": "plain_text",
@@ -18,8 +18,8 @@
     {
       "type": "plain_text",
       "name": "ROTATE_AFTER_H",
-      "text": "10.5",
-      "value": "11"
+      "text": "9999",
+      "value": "9999"
     },
     {
       "type": "service",
