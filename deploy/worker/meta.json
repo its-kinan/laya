@@ -1,0 +1,32 @@
+{
+  "bindings": [
+    {
+      "type": "kv_namespace",
+      "name": "LAYA_KV",
+      "namespace_id": "25d9385772f447f49beab44c8e4cf167"
+    },
+    {
+      "type": "plain_text",
+      "name": "ALIASES",
+      "text": "laya-orig,laya-finetuned"
+    },
+    {
+      "type": "plain_text",
+      "name": "RELAY_BASE",
+      "text": "https://tunnel-relay.ediprnm-keen.workers.dev"
+    },
+    {
+      "type": "plain_text",
+      "name": "ROTATE_AFTER_H",
+      "text": "10.5",
+      "value": "11"
+    },
+    {
+      "type": "service",
+      "name": "RELAY",
+      "service": "tunnel-relay"
+    }
+  ],
+  "main_module": "worker.mjs",
+  "compatibility_date": "2026-09-01"
+}
