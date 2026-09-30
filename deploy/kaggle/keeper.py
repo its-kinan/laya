@@ -26,6 +26,12 @@ KAGGLE = os.path.join(HOME, "workspace", ".venvs", "laya", "bin", "kaggle")
 
 ALIAS = "kaggle-laya-cpu"
 RELAYS_PATH = os.path.join(HOME, "workspace", "tunnel", "relays.json")
+# Laya dashboard worker KV: mirror keeper state here so the dashboard's
+# health display and rotation watcher track the live backend instead of a
+# stale one. (The worker's own rotation is parked via ROTATE_AFTER_H=9999.)
+LAYA_KV_NS = "25d9385772f447f49beab44c8e4cf167"
+LAYA_KV_ACCT = "92666ff48783a2e7624444c4bf4a9f68"
+CF_API = os.path.join(HOME, "workspace", "skills", "cloudflare", "bin", "cf-api")
 # Per-kernel shutdown tokens, written by build-serve-nb.py: {backend_id: token}.
 # Lets the keeper tell a running kernel to end its session via
 # POST /t/<backend-id>/admin/shutdown — no Kaggle API needed.
@@ -137,6 +143,33 @@ def heal_aliases(relays, per_relay, backend):
         if target != backend:
             log("alias on %s points at %s, expected %s: re-flipping" % (base, target, backend))
             flip_alias(base, sec, backend)
+
+def sync_worker_kv(state):
+    """Mirror keeper state into the laya dashboard worker's KV.
+
+    The worker's cron reads laya:state:<alias> for its health display and
+    rotation watcher. Without this sync it keeps checking whatever backend
+    was current when the KV was last written, racking up consec_fail and
+    logging push_failed every 15 min. Best-effort: never break a rotation
+    over a dashboard nicety.
+    """
+    try:
+        payload = json.dumps({
+            "backend_id": state.get("backend_id"),
+            "started_utc": state.get("started_utc"),
+            "consec_fail": state.get("consec_failures", 0),
+            "last_healthy_utc": datetime.now(timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.") + "%03dZ" % (datetime.now(timezone.utc).microsecond // 1000),
+        })
+        p = subprocess.run(
+            [CF_API, "put",
+             "/accounts/%s/storage/kv/namespaces/%s/values/laya:state:%s"
+             % (LAYA_KV_ACCT, LAYA_KV_NS, ALIAS), payload],
+            capture_output=True, text=True, timeout=90)
+        if p.returncode != 0:
+            log("worker KV sync failed: %s" % (p.stderr or p.stdout)[:160])
+    except Exception as e:
+        log("worker KV sync failed: %s" % str(e)[:160])
 
 def load_tokens():
     try:
@@ -260,6 +293,9 @@ def rotate(state, relays):
     save_state({"backend_id": new_id,
                 "started_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "consec_failures": 0})
+    sync_worker_kv({"backend_id": new_id,
+                    "started_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "consec_failures": 0})
     log("rotation complete")
     return True
 
@@ -292,6 +328,7 @@ def main():
     fails = 0 if healthy else state.get("consec_failures", 0) + 1
     state["consec_failures"] = fails
     save_state(state)
+    sync_worker_kv(state)
 
     log("backend=%s age=%.1fh healthy=%s fails=%d" % (backend, age_h, healthy, fails))
 
