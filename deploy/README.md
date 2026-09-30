@@ -25,9 +25,27 @@ Live at `https://laya.ediprnm-keen.workers.dev/`. KV namespace `laya`.
 
 **Serving aliases:**
 - `kaggle-laya-cpu` — primary public endpoint, serves the fine-tuned
-  multilingual model. Public URL:
+  multilingual model. One public URL per relay (dual relays, §`tunnel-relay/`):
   `https://tunnel-relay.ediprnm-keen.workers.dev/t/kaggle-laya-cpu/v1/systemone`
+  `https://tunnel-relay.ediprnm11.workers.dev/t/kaggle-laya-cpu/v1/systemone`
 - `laya-orig`, `laya-finetuned` — legacy aliases (pre-A/B test naming).
+
+**Rotation (VM keeper cron, every 15 min):** at 10.5h backend age the keeper
+builds a fresh kernel (`build-serve-nb.py`, one tunnel agent per relay, same
+backend id), pushes it, waits for `/health` on each relay, then flips the
+alias per relay — never pointing an alias at an unverified backend. The
+worker-side rotation is disabled; the keeper is the single writer.
+
+**Kaggle slot discipline (5 CPU sessions max):** steady state holds exactly
+1 serving slot; rotation transiently holds 2 (boot + verify). The old kernel
+frees its slot in ~1–3 min after the alias moves, two ways:
+- the notebook's keep-alive cell polls each relay's `/admin/alias` every 60s
+  and stops itself once no relay points at it (guarded: only after the alias
+  pointed at it once, 3 consecutive positive mismatches);
+- `POST /t/<backend-id>/admin/shutdown` (per-kernel token, held by the
+  keeper) — the keeper calls it automatically when all relays flipped, or
+  manually via `python3 keeper.py shutdown <backend-id>`.
+The other 4 session slots stay free for training.
 
 The worker is also the **rotation watcher**: its cron checks backend age every
 15 minutes. At 11h it pushes fresh Kaggle kernels; when the replacements are

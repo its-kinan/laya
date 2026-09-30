@@ -1,0 +1,1 @@
+{"bindings":[{"class_name":"TunnelRelay","name":"TUNNEL","type":"durable_object_namespace"}],"main_module":"worker.mjs","migrations":{"new_sqlite_classes":["TunnelRelay"],"new_tag":"v1"}}
