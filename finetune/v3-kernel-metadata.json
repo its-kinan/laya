@@ -1,0 +1,15 @@
+{
+ "id": "kinan21/laya-hl-finetune-multilingual-v3",
+ "title": "Laya HL Finetune: multilingual (v3, 30-min)",
+ "code_file": "laya-hl-finetune-multilingual-v3.ipynb",
+ "language": "python",
+ "kernel_type": "notebook",
+ "is_private": "true",
+ "enable_gpu": "true",
+ "enable_internet": "true",
+ "dataset_sources": [
+  "kinan21/laya-hl-trial-v3-h30"
+ ],
+ "competition_sources": [],
+ "kernel_sources": []
+}

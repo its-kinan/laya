@@ -1,0 +1,13 @@
+{
+  "id": "kinan21/laya-hl-backtest-v2",
+  "title": "Laya HL Backtest: finetuned vs base on tape",
+  "code_file": "laya-hl-backtest-v2.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": ["kinan21/laya-hl-trial-v2"],
+  "competition_sources": [],
+  "kernel_sources": ["kinan21/laya-hl-finetune-multilingual-v2"]
+}
